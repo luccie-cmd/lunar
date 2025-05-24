@@ -1,0 +1,8 @@
+.build-cache/
+.vscode/
+bin/
+__pycache__/
+*.old
+*.txt
+main.ll
+main.c

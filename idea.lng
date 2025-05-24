@@ -1,0 +1,29 @@
+import std::io;
+
+class Test {
+    func @attrib(public) new(x: u64) {
+        this.x = x;
+    }
+    func @attrib(public) delete() {}
+    func @attrib(public) print(): void {
+        std::io::printf("X is %llu\n", this.x);
+    }
+    var @attrib(private) x: u64;
+}
+
+func @attrib(no_mangle) isEven(value: u64): void {
+    if ((value % 2) == 0) {
+        std::io::printf("Value %llu is even\n", value);
+    } else {
+        std::io::printf("Value %llu is odd\n", value);
+    }
+}
+
+func @attrib(no_mangle) main(): u32 {
+    std::io::printf("Hello, World\n");
+    var test: *Test = Test::new(5 + 2 as u64);
+    test.print();
+    test.delete();
+    isEven(1024);
+    return (-34 + 35) as u32;
+}
