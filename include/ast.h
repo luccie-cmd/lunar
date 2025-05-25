@@ -53,6 +53,7 @@ class TypeSpec : public AstNode {
     bool        isInteger();
     bool        isUnsigned();
     size_t      getBitSize();
+    size_t      getPointerCount();
     bool        operator!=(TypeSpec other) {
         return !(this->pointerLevel == other.pointerLevel && this->name == other.name);
     }

@@ -404,6 +404,9 @@ void NumericLiteralExpressionNode::print(size_t indent) {
     printIndent(indent + (TAB_WIDTH * 2));
     std::printf("|- Value: `%s`\n", this->value.c_str());
 }
+std::string NumericLiteralExpressionNode::getValue() {
+    return this->value;
+}
 StringLiteralExpressionNode::StringLiteralExpressionNode(std::string value)
     : ExpressionNode(ExpressionNodeType::StringLiteral) {
     this->value = value;
@@ -643,7 +646,13 @@ size_t TypeSpec::getBitSize() {
     if (this->name == "u64" || this->name == "i64") {
         return 64;
     }
+    if (this->name == "String") {
+        return 64;
+    }
     std::printf("TODO: Type %s\n", this->name.c_str());
     std::exit(1);
+}
+size_t TypeSpec::getPointerCount() {
+    return this->pointerLevel;
 }
 }; // namespace language

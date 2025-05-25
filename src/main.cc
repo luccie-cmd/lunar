@@ -10,6 +10,7 @@ using namespace command_line_opts;
 std::string inputFile;
 std::string outputFile;
 bool        dumpAst;
+bool        dumpIr;
 
 void handleWarnings(std::string warning) {
     std::printf("TODO warning: %s\n", warning.c_str());
@@ -24,6 +25,8 @@ void setOutput(std::string path) {
 void handleDump(std::string tree) {
     if (tree == "ast") {
         dumpAst = true;
+    } else if (tree == "ir") {
+        dumpIr = true;
     } else {
         std::fprintf(stderr, "Invalid tree to dump `%s`\n", tree.c_str());
         std::exit(1);
@@ -55,7 +58,9 @@ int main(int argc, char** argv) {
     if (dumpAst) {
         ast->print();
     }
-    // language::IrGen*    irgen   = new language::IrGen(ast);
-    // language::IrModule* _module = irgen->getModule();
-    // _module->print();
+    language::IrGen*    irgen   = new language::IrGen(ast);
+    language::IrModule* _module = irgen->getModule();
+    if (dumpIr) {
+        _module->print();
+    }
 }

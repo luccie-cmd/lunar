@@ -13,6 +13,13 @@ Sema::Sema(Ast* ast) {
 SymbolTable* Sema::getCurrentTable() {
     return this->tables.top();
 }
+static ExpressionNode* getDefaultForType(TypeSpec* type) {
+    if (type->isInteger()) {
+        return new NumericLiteralExpressionNode("0");
+    }
+    std::printf("TODO: getDefaultForType for `%s`\n", type->getName().c_str());
+    std::exit(1);
+}
 static TypeSpec* getBiggestType(TypeSpec* type1, TypeSpec* type2) {
     if (type1->isInteger() && type2->isInteger()) {
         if (type1->isUnsigned() == type2->isUnsigned()) {
@@ -40,7 +47,9 @@ static TypeSpec* getBiggestType(TypeSpec* type1, TypeSpec* type2) {
 static TypeSpec* convertExpressionToType(SymbolTable* table, ExpressionNode* node) {
     switch (node->getExprType()) {
     case ExpressionNodeType::NumericLiteral: {
-        return new TypeSpec(0, "i32");
+        int64_t val = std::stol(reinterpret_cast<NumericLiteralExpressionNode*>(node)->getValue());
+        return new TypeSpec(0, val < 0 ? (val + UINT32_MAX >= 0 ? "i32" : "i64")
+                                       : (val > UINT32_MAX ? "u64" : "u32"));
     } break;
     case ExpressionNodeType::Unary: {
         return new TypeSpec(0, "i32");
@@ -48,7 +57,7 @@ static TypeSpec* convertExpressionToType(SymbolTable* table, ExpressionNode* nod
     case ExpressionNodeType::Binary: {
         BinaryExpressionNode* binNode = reinterpret_cast<BinaryExpressionNode*>(node);
         TypeSpec*             lhs     = convertExpressionToType(table, binNode->getLhs());
-        TypeSpec*             rhs     = convertExpressionToType(table, binNode->getLhs());
+        TypeSpec*             rhs     = convertExpressionToType(table, binNode->getRhs());
         return getBiggestType(lhs, rhs);
     } break;
     case ExpressionNodeType::IdentifierLiteral: {
@@ -63,7 +72,8 @@ static TypeSpec* convertExpressionToType(SymbolTable* table, ExpressionNode* nod
         return reinterpret_cast<CastExpressionNode*>(node)->getType();
     } break;
     default: {
-        std::printf("Unhandled expression node type for conversion %llu\n", node->getExprType());
+        std::printf("TODO: Unhandled expression node type for conversion %llu\n",
+                    node->getExprType());
         std::exit(1);
     } break;
     }
@@ -117,9 +127,21 @@ DeclarationNode* Sema::checkFunctionDecl(FunctionDeclarationNode* node) {
         funcTable->insert(paramSym);
     }
     this->tables.push(funcTable);
-    FunctionDeclarationNode* newDeclNode =
-        new FunctionDeclarationNode(node->getName(), node->getAttribs(), node->getParams(),
-                                    node->getReturnType(), this->checkStatement(node->getBody()));
+    StatementNode* newBody = this->checkStatement(node->getBody());
+    if (newBody->getStmtType() != StatementNodeType::Compound) {
+        newBody = new CompoundStatementNode({newBody});
+    }
+    StatementNode* topBody = newBody;
+    while (newBody->getStmtType() == StatementNodeType::Compound) {
+        newBody = reinterpret_cast<CompoundStatementNode*>(newBody)->getNodes().back();
+    }
+    if (newBody->getStmtType() != StatementNodeType::Return) {
+        std::vector<StatementNode*> nodes = {topBody};
+        nodes.push_back(new ReturnStatementNode(getDefaultForType(sym->type)));
+        topBody = new CompoundStatementNode(nodes);
+    }
+    FunctionDeclarationNode* newDeclNode = new FunctionDeclarationNode(
+        node->getName(), node->getAttribs(), node->getParams(), node->getReturnType(), topBody);
     this->tables.pop();
     return newDeclNode;
 }
@@ -151,13 +173,15 @@ DeclarationNode* Sema::checkVarDecl(VariableDeclarationNode* node) {
         if (*convertExpressionToType(this->getCurrentTable(), newVal) != *sym->type) {
             newVal = new CastExpressionNode(newVal, sym->type);
         }
+    } else {
+        newVal = getDefaultForType(node->getType());
     }
-    // if (!exprCanBeFolded(newVal) && this->getCurrentTable()->name == "@GlobalScope") {
-    //     std::printf("Initializer element of global var `%s` is not constant\n",
-    //     sym->name.c_str()); std::exit(1);
-    // }
+    if (!exprCanBeFolded(newVal) && this->getCurrentTable()->name == "@GlobalScope") {
+        std::printf("Initializer element of global var `%s` is not constant\n", sym->name.c_str());
+        std::exit(1);
+    }
     return new VariableDeclarationNode(node->getName(), node->getAttribs(), sym->type,
-                                       newVal ? std::make_optional(newVal) : std::nullopt);
+                                       std::make_optional(newVal));
 }
 DeclarationNode* Sema::checkDeclarationNode(DeclarationNode* node) {
     switch (node->getDeclType()) {
