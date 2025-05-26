@@ -8,23 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-/*
-# object $someGlobalVar, type u32 = 10;
-# function $printf(#0 type u8*, #1 type Variadic) {
-#     #2 = reserve type i32
-#     #3 = mul type i32 2, type i32 3
-#     #4 = load $someGlobalVar, type i32
-#     #5 = add type i32 #3, type i32 #4
-#     store type ptr #2, type i32 #5
-#     #6 = reserve type i32
-#     #7 = load #2, type i32
-#     #8 = mul type i32 #7, type i32 2
-#     store type ptr #3, type i32 #8
-#     #9 = load #7, type i32
-#     ret #9, type i32
-# }
-*/
-
 namespace language {
 enum struct IrTypeType {
     I32,
