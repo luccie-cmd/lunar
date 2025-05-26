@@ -21,8 +21,14 @@ void IrType::print() {
 void IrOperand::print() {
     this->irType->print();
     switch (this->type) {
+    case IrOperandType::ConstU32: {
+        std::printf(" %u", this->constU32);
+    } break;
     case IrOperandType::ConstI32: {
         std::printf(" %d", this->constI32);
+    } break;
+    case IrOperandType::ConstU64: {
+        std::printf(" %lu", this->constU64);
     } break;
     case IrOperandType::ConstI64: {
         std::printf(" %ld", this->constI64);

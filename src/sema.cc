@@ -133,10 +133,17 @@ DeclarationNode* Sema::checkFunctionDecl(FunctionDeclarationNode* node) {
     }
     StatementNode* topBody = newBody;
     while (newBody->getStmtType() == StatementNodeType::Compound) {
+        if (reinterpret_cast<CompoundStatementNode*>(newBody)->getNodes().empty()) {
+            break;
+        }
         newBody = reinterpret_cast<CompoundStatementNode*>(newBody)->getNodes().back();
     }
     if (newBody->getStmtType() != StatementNodeType::Return) {
-        std::vector<StatementNode*> nodes = {topBody};
+        std::vector<StatementNode*> nodes;
+        if (topBody->getStmtType() == StatementNodeType::Compound &&
+            !reinterpret_cast<CompoundStatementNode*>(topBody)->getNodes().empty()) {
+            nodes.push_back(topBody);
+        }
         nodes.push_back(new ReturnStatementNode(getDefaultForType(sym->type)));
         topBody = new CompoundStatementNode(nodes);
     }
