@@ -71,9 +71,11 @@ void ReturnStatementNode::print(size_t indent) {
     std::printf("|- Statement:\n");
     printIndent(indent + TAB_WIDTH);
     std::printf("|- Return:\n");
-    printIndent(indent + (TAB_WIDTH * 2));
-    std::printf("|- Expression:\n");
-    this->retExpr->print(indent + (TAB_WIDTH * 3));
+    if (this->retExpr != nullptr) {
+        printIndent(indent + (TAB_WIDTH * 2));
+        std::printf("|- Expression:\n");
+        this->retExpr->print(indent + (TAB_WIDTH * 3));
+    }
 }
 ExpressionNode* ReturnStatementNode::getExpr() {
     return this->retExpr;

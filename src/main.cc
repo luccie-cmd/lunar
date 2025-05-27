@@ -1,10 +1,12 @@
 #include <clopts.h>
 #include <cstdio>
+#include <execinfo.h>
 #include <filesystem>
 #include <irgen.h>
 #include <parser.h>
 #include <sema.h>
 #include <string>
+#include <unistd.h>
 
 using namespace command_line_opts;
 std::string inputFile;
@@ -47,7 +49,20 @@ clopts_opt_t clopts = {
     {{"-W", handleWarnings, false}, {"-o", setOutput, true}, {"-dump-", handleDump, false}},
     unknownArg};
 
+void printStacktrace() {
+    void*  buffer[100];
+    int    num_ptrs = backtrace(buffer, 100);
+    char** symbols  = backtrace_symbols(buffer, num_ptrs);
+
+    std::printf("=== Stack trace ===\n");
+    for (int i = 0; i < num_ptrs; ++i) {
+        std::printf("`%s`\n", symbols[i]);
+    }
+    free(symbols);
+}
+
 int main(int argc, char** argv) {
+    std::atexit(printStacktrace);
     std::string contents;
     clopts.parse(argc, argv);
     contents                 = clopts.handleFile(inputFile);

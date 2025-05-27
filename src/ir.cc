@@ -23,6 +23,9 @@ static std::string convertIrTypeToString(IrTypeType type) {
     case IrTypeType::I64: {
         return "i64";
     } break;
+    case IrTypeType::Void: {
+        return "void";
+    } break;
     case IrTypeType::String: {
         return "string";
     } break;

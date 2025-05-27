@@ -12,6 +12,7 @@ namespace language {
 enum struct IrTypeType {
     I32,
     I64,
+    Void,
     String,
     Variable,
     Variadic,

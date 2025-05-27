@@ -213,6 +213,9 @@ IrType* IrGen::generateType(TypeSpec* type) {
     if (type->getName() == "Variadic") {
         return new IrType(IrTypeType::Variadic, "variadic");
     }
+    if (type->getName() == "void") {
+        return new IrType(IrTypeType::Void, "void");
+    }
     if (type->getBitSize() == 32 && type->isInteger()) {
         return new IrType(IrTypeType::I32, "i32");
     }
@@ -441,15 +444,21 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
             }
         } break;
         case StatementNodeType::Return: {
-            std::vector<IrInstruction*> insts =
-                this->genInstsFromExpr(reinterpret_cast<ReturnStatementNode*>(stmtNode)->getExpr());
-            insts.push_back(new IrInstruction(
-                std::nullopt, IrInstructionType::Return,
-                {createSSAOperand(
-                    ssaResults - 1,
-                    this->generateType(convertExpressionToType(
-                        this->outModule->objects, this->currentFunc,
-                        reinterpret_cast<ReturnStatementNode*>(stmtNode)->getExpr())))}));
+            ReturnStatementNode*        retStmt = reinterpret_cast<ReturnStatementNode*>(stmtNode);
+            std::vector<IrInstruction*> insts;
+            if (retStmt->getExpr() == nullptr) {
+                insts.push_back(new IrInstruction(
+                    std::nullopt, IrInstructionType::Return,
+                    {createTypeOperand(this->generateType(new TypeSpec(0, "void")))}));
+            } else {
+                insts = this->genInstsFromExpr(retStmt->getExpr());
+                insts.push_back(new IrInstruction(
+                    std::nullopt, IrInstructionType::Return,
+                    {createSSAOperand(
+                        ssaResults - 1,
+                        this->generateType(convertExpressionToType(
+                            this->outModule->objects, this->currentFunc, retStmt->getExpr())))}));
+            }
             currentBlock->insts.insert(currentBlock->insts.end(), insts.begin(), insts.end());
             insertBlock(currentBlock, std::nullopt);
             currentBlock = nullptr;

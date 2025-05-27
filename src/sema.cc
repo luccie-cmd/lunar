@@ -7,13 +7,16 @@ Sema::Sema(Ast* ast) {
     globalTable->name        = "@GlobalScope";
     globalTable->parent      = nullptr;
     globalTable->symbols.clear();
-    globalTable->allowedTypes = {"String", "Variadic", "i32", "i64", "u32", "u64"};
+    globalTable->allowedTypes = {"String", "Variadic", "i32", "i64", "u32", "u64", "void"};
     this->tables.push(globalTable);
 }
 SymbolTable* Sema::getCurrentTable() {
     return this->tables.top();
 }
 static ExpressionNode* getDefaultForType(TypeSpec* type) {
+    if (type->getName() == "void") {
+        return nullptr;
+    }
     if (type->isInteger()) {
         return new NumericLiteralExpressionNode("0");
     }
@@ -182,6 +185,10 @@ DeclarationNode* Sema::checkVarDecl(VariableDeclarationNode* node) {
         }
     } else {
         newVal = getDefaultForType(node->getType());
+        if (newVal == nullptr) {
+            std::printf("Cannot declare a variable as `%s`\n", sym->type->getName().c_str());
+            std::exit(1);
+        }
     }
     if (!exprCanBeFolded(newVal) && this->getCurrentTable()->name == "@GlobalScope") {
         std::printf("Initializer element of global var `%s` is not constant\n", sym->name.c_str());
