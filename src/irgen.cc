@@ -391,7 +391,7 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
     std::vector<IrBlock*> blocks;
     IrBlock*              currentBlock = new IrBlock;
     currentBlock->name                 = ".BB" + std::to_string(blockNumbers++);
-    auto insertBlock                   = [&](IrBlock* block, std::optional<std::string> nextName) {
+    auto insertBlock = [&blocks](IrBlock* block, std::optional<std::string> nextName) {
         if ((block->insts.empty() || !isTerminatorInst(block->insts.back()->type)) &&
             nextName.has_value()) {
             IrInstruction* terminatorInst = new IrInstruction;
@@ -409,6 +409,11 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
         blocks.push_back(block);
     };
     for (StatementNode* stmtNode : node->getNodes()) {
+        if (!currentBlock ||
+            (!currentBlock->insts.empty() && isTerminatorInst(currentBlock->insts.back()->type))) {
+            currentBlock       = new IrBlock;
+            currentBlock->name = ".BB" + std::to_string(blockNumbers++);
+        }
         switch (stmtNode->getStmtType()) {
         case StatementNodeType::Declaration: {
             DeclarationNode* declNode =
@@ -453,29 +458,31 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
             std::vector<IrInstruction*> insts =
                 this->genInstsFromExpr(reinterpret_cast<ReturnStatementNode*>(stmtNode)->getExpr());
             insts.push_back(new IrInstruction(
-                {}, IrInstructionType::Return,
+                std::nullopt, IrInstructionType::Return,
                 {createSSAOperand(
                     ssaResults - 1,
                     this->generateType(convertExpressionToType(
                         this->outModule->objects, this->currentFunc,
                         reinterpret_cast<ReturnStatementNode*>(stmtNode)->getExpr())))}));
-            for (IrInstruction* inst : insts) {
-                currentBlock->insts.push_back(inst);
-            }
+            currentBlock->insts.insert(currentBlock->insts.end(), insts.begin(), insts.end());
+            insertBlock(currentBlock, std::nullopt);
+            currentBlock = nullptr;
         } break;
         case StatementNodeType::Compound: {
-            insertBlock(currentBlock, ".BB" + std::to_string(blockNumbers));
-            std::vector<IrBlock*> compoundBlocks =
-                this->generateCompoundBlocks(reinterpret_cast<CompoundStatementNode*>(stmtNode));
-            blockNumbers++;
-            for (size_t i = 0; i < compoundBlocks.size(); ++i) {
-                insertBlock(compoundBlocks.at(i),
-                            compoundBlocks.size() < i + 1
-                                ? std::make_optional(compoundBlocks.at(i + 1)->name)
-                                : std::nullopt);
+            std::string nextName = ".BB" + std::to_string(blockNumbers);
+            insertBlock(currentBlock, nextName);
+
+            auto compoundBlocks =
+                generateCompoundBlocks(reinterpret_cast<CompoundStatementNode*>(stmtNode));
+
+            blocks.insert(blocks.end(), compoundBlocks.begin(), compoundBlocks.end());
+            IrBlock* last = compoundBlocks.back();
+            if (!last->insts.empty() && isTerminatorInst(last->insts.back()->type)) {
+                currentBlock = nullptr;
+            } else {
+                currentBlock       = new IrBlock;
+                currentBlock->name = ".BB" + std::to_string(blockNumbers++);
             }
-            currentBlock       = new IrBlock;
-            currentBlock->name = ".BB" + std::to_string(blockNumbers - compoundBlocks.size());
         } break;
         default: {
             std::printf("TODO: Generate stmt %llu\n", stmtNode->getStmtType());
@@ -483,7 +490,8 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
         } break;
         }
     }
-    if (!currentBlock->insts.empty() || blocks.empty()) {
+    if (currentBlock && !currentBlock->insts.empty() && blocks.empty()) {
+        // insertBlock(currentBlock, std::nullopt);
         insertBlock(currentBlock, ".BB" + std::to_string(blockNumbers));
     }
     return blocks;
