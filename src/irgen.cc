@@ -368,7 +368,9 @@ std::vector<IrInstruction*> IrGen::genInstsFromExpr(ExpressionNode* node) {
         inst->type                        = IrInstructionType::Load;
         inst->result                      = newSSAResult();
         LtoRValueCastExpression* LtoRExpr = reinterpret_cast<LtoRValueCastExpression*>(node);
-        inst->operands                    = {this->generateOperand(LtoRExpr->getExpr())};
+        inst->operands                    = {this->generateOperand(LtoRExpr->getExpr()),
+                                             createTypeOperand(this->generateType(convertExpressionToType(
+                              this->outModule->objects, this->currentFunc, LtoRExpr->getExpr())))};
         return {inst};
     } break;
     default: {

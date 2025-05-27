@@ -305,13 +305,6 @@ CastExpressionNode::CastExpressionNode(ExpressionNode* value, TypeSpec* type)
     : ExpressionNode(ExpressionNodeType::Cast) {
     this->value = value;
     this->type  = type;
-    if (this->value->getExprType() == ExpressionNodeType::NumericLiteral &&
-        this->type->getName() == "i32") {
-        std::printf("ICE: Invalid cast please fix:\n");
-        value->print(0);
-        type->print(0);
-        std::exit(1);
-    }
 }
 CastExpressionNode::~CastExpressionNode() {
     delete this->value;
