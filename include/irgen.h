@@ -73,6 +73,7 @@ struct IrBlock {
 };
 struct IrFunction {
     std::string                             name;
+    IrType*                                 returnType;
     std::vector<std::pair<IrType*, size_t>> arguments;
     std::unordered_map<std::string, size_t> nameToSSANumber;
     std::vector<IrInstruction*>             entryInsts;

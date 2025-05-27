@@ -153,6 +153,7 @@ IrFunction*   IrGen::emitTopFunctionDecl(FunctionDeclarationNode* node) {
     IrFunction* func  = new IrFunction;
     this->currentFunc = func;
     func->name        = node->getName();
+    func->returnType  = this->generateType(node->getReturnType());
     std::pair<std::vector<std::pair<IrType*, size_t>>, std::unordered_map<std::string, size_t>>
         tempArgs                  = this->constructFuncArgs(node->getParams());
     func->arguments               = tempArgs.first;

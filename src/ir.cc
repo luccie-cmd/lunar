@@ -142,7 +142,9 @@ void IrBlock::print(size_t indent) {
 }
 void IrFunction::print(size_t indent) {
     printIndent(indent);
-    std::printf("function $%s(", this->name.c_str());
+    std::printf("function ");
+    this->returnType->print();
+    std::printf(" $%s(", this->name.c_str());
     for (std::pair<IrType*, size_t> arg : this->arguments) {
         std::printf("#%lu ", arg.second);
         arg.first->print();
