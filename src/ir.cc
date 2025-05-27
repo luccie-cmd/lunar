@@ -15,20 +15,46 @@ void printIndent(size_t indent) {
         std::putchar(' ');
     }
 }
+static std::string convertIrTypeToString(IrTypeType type) {
+    switch (type) {
+    case IrTypeType::I32: {
+        return "i32";
+    } break;
+    case IrTypeType::I64: {
+        return "i64";
+    } break;
+    case IrTypeType::String: {
+        return "string";
+    } break;
+    case IrTypeType::Variable: {
+        return "variable";
+    } break;
+    case IrTypeType::Variadic: {
+        return "variadic";
+    } break;
+    case IrTypeType::Pointer: {
+        return "pointer";
+    } break;
+    case IrTypeType::Label: {
+        return "label";
+    } break;
+    case IrTypeType::Custom: {
+        return "custom";
+    } break;
+    default: {
+        std::printf("TODO: Convert IrTypeType %llu to string\n", type);
+        std::exit(1);
+    } break;
+    }
+}
 void IrType::print() {
-    std::printf("type %s", this->name.c_str());
+    std::printf("type %s", convertIrTypeToString(this->type).c_str());
 }
 void IrOperand::print() {
     this->irType->print();
     switch (this->type) {
-    case IrOperandType::ConstU32: {
-        std::printf(" %u", this->constU32);
-    } break;
     case IrOperandType::ConstI32: {
         std::printf(" %d", this->constI32);
-    } break;
-    case IrOperandType::ConstU64: {
-        std::printf(" %lu", this->constU64);
     } break;
     case IrOperandType::ConstI64: {
         std::printf(" %ld", this->constI64);

@@ -11,9 +11,7 @@
 namespace language {
 enum struct IrTypeType {
     I32,
-    U32,
     I64,
-    U64,
     String,
     Variable,
     Variadic,
@@ -27,9 +25,7 @@ struct IrType {
     void        print();
 };
 enum struct IrOperandType {
-    ConstU32,
     ConstI32,
-    ConstU64,
     ConstI64,
     Type,
     SSA,

@@ -117,20 +117,6 @@ static IrOperand* createConstI64Operand(int64_t value) {
     op->constI64  = value;
     return op;
 }
-static IrOperand* createConstU32Operand(uint32_t value) {
-    IrOperand* op = new IrOperand;
-    op->type      = IrOperandType::ConstU32;
-    op->irType    = new IrType(IrTypeType::U32, "u32");
-    op->constU32  = value;
-    return op;
-}
-static IrOperand* createConstU64Operand(uint64_t value) {
-    IrOperand* op = new IrOperand;
-    op->type      = IrOperandType::ConstU64;
-    op->irType    = new IrType(IrTypeType::U64, "u64");
-    op->constU64  = value;
-    return op;
-}
 static IrOperand* createTypeOperand(IrType* type) {
     IrOperand* op = new IrOperand;
     op->type      = IrOperandType::Type;
@@ -227,10 +213,10 @@ IrType* IrGen::generateType(TypeSpec* type) {
         return new IrType(IrTypeType::Variadic, "variadic");
     }
     if (type->getBitSize() == 32 && type->isInteger()) {
-        return new IrType(type->isUnsigned() ? IrTypeType::U32 : IrTypeType::I32, type->getName());
+        return new IrType(IrTypeType::I32, "i32");
     }
     if (type->getBitSize() == 64 && type->isInteger()) {
-        return new IrType(type->isUnsigned() ? IrTypeType::U64 : IrTypeType::I64, type->getName());
+        return new IrType(IrTypeType::I64, "i64");
     }
     std::printf("TODO: Generate type for typespec name `%s`\n", type->getName().c_str());
     std::exit(1);
@@ -241,10 +227,7 @@ IrOperand* IrGen::generateOperand(ExpressionNode* expr) {
         NumericLiteralExpressionNode* numExpr =
             reinterpret_cast<NumericLiteralExpressionNode*>(expr);
         int64_t val = std::stol(numExpr->getValue());
-        return val < 0 ? (val + UINT32_MAX >= 0 ? createConstI32Operand(val)
-                                                : createConstI64Operand(val))
-                       : (val > UINT32_MAX ? createConstU64Operand(std::stoul(numExpr->getValue()))
-                                           : createConstU32Operand(val));
+        return val + UINT32_MAX >= 0 ? createConstI32Operand(val) : createConstI64Operand(val);
     } break;
     case ExpressionNodeType::Cast: {
         IrOperand* actualOp =
