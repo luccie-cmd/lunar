@@ -491,7 +491,6 @@ std::vector<IrBlock*> IrGen::generateCompoundBlocks(CompoundStatementNode* node)
         }
     }
     if (currentBlock && !currentBlock->insts.empty() && blocks.empty()) {
-        // insertBlock(currentBlock, std::nullopt);
         insertBlock(currentBlock, ".BB" + std::to_string(blockNumbers));
     }
     return blocks;
